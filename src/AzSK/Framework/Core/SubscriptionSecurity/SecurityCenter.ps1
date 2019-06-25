@@ -9,6 +9,7 @@ class SecurityCenter: AzSKRoot
 	[string] $On = "On";
 	[string] $ContactPhoneNumber;
 	[string] $ContactEmail;
+	[PSObject] $WorkspaceSettings;
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
     { 		
@@ -27,6 +28,7 @@ class SecurityCenter: AzSKRoot
 		$this.LoadCurrentPolicy();
 		#calling this function as it would fetch the current contact phone number settings 
 		$this.CheckSecurityContactSettings();
+		$this.CheckWorkspaceSettings();
 	}
 
 	SecurityCenter([string] $subscriptionId, [string] $securityContactEmail, [string] $securityContactPhoneNumber): 
@@ -369,4 +371,10 @@ class SecurityCenter: AzSKRoot
 	
 	 	return $MisConfiguredOptionalPolicies;		
 	}	
+	[void] CheckWorkspaceSettings() {
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/workspaceSettings?api-version=2017-08-01-preview"
+		$workspaceSettingsDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+
+	}
 }

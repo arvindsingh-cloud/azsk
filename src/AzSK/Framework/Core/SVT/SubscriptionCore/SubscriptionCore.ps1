@@ -13,6 +13,7 @@ class SubscriptionCore: SVTBase
 	hidden [bool] $HasGraphAPIAccess;
 	hidden [PSObject] $MisConfiguredASCPolicies;
 	hidden [PSObject] $MisConfiguredOptionalASCPolicies;
+	hidden [PSObject] $ASCTierResourceWise;
 	hidden [SecurityCenter] $SecurityCenterInstance;
 	hidden [string[]] $SubscriptionMandatoryTags = @();
 	hidden [System.Collections.Generic.List[TelemetryRBAC]] $PIMAssignments;
@@ -1092,6 +1093,10 @@ class SubscriptionCore: SVTBase
 				$ascTier = $this.ControlSettings.SubscriptionCore.ASCTier
 			}
 			
+			$this.SubscriptionContext.SubscriptionMetadata.Add("ASCTier", $ascTierContentDetails.properties.pricingTier)
+			$this.CheckASCTierResourceWise();
+			$this.SubscriptionContext.SubscriptionMetadata.Add("ASCTierResourceWise", $this.ASCTierResourceWise)
+
 			if($ascTierContentDetails.properties.pricingTier -eq $ascTier)
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected '$ascTier' tier is configured for ASC" )
@@ -1102,6 +1107,31 @@ class SubscriptionCore: SVTBase
 			}
 		}
 		return $controlResult
+	}
+
+	hidden [void] CheckASCTierResourceWise()
+	{
+		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
+		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
+		$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+		
+		$ascTierResourceWiseDetailsList = [System.Collections.ArrayList]::new()
+		foreach($resourceDetails in $ascTierResourceWiseDetails)
+		{
+			if([Helpers]::CheckMember($resourceDetails,"name"))
+			{
+				if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
+				{
+					$ASCResourceTier = @{
+						"Name" = $resourceDetails.name;
+						"Tier" = $resourceDetails.properties.pricingTier;
+					}
+					$ascTierResourceWiseDetailsList.Add($ASCResourceTier) | Out-Null
+				}
+			}
+		}
+
+		$this.ASCTierResourceWise = $ascTierResourceWiseDetailsList;
 	}
 
 	hidden [void] LoadRBACConfig()
