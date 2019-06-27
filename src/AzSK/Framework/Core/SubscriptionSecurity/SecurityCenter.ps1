@@ -19,6 +19,7 @@ class SecurityCenter: AzSKRoot
 		}
 		$this.LoadPolicies(); 
 		$this.LoadCurrentPolicy();
+		$this.CheckWorkspaceSettings();
 	}
 	SecurityCenter([string] $subscriptionId): 
         Base($subscriptionId)
@@ -47,6 +48,7 @@ class SecurityCenter: AzSKRoot
 		{
 			$this.ContactEmail = $securityContactEmail;
 		}		
+		$this.CheckWorkspaceSettings();
 	}
 
 
@@ -371,10 +373,26 @@ class SecurityCenter: AzSKRoot
 	
 	 	return $MisConfiguredOptionalPolicies;		
 	}	
+	
 	[void] CheckWorkspaceSettings() {
 		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
 		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/workspaceSettings?api-version=2017-08-01-preview"
 		$workspaceSettingsDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
 
+		if([Helpers]::CheckMember($workspaceSettingsDetails,"name"))
+		{
+			if([Helpers]::CheckMember($workspaceSettingsDetails,"properties.workspaceId") -and [Helpers]::CheckMember($workspaceSettingsDetails,"properties.scope"))
+			{
+				$this.WorkspaceSettings = @{
+					"Name" = $workspaceSettingsDetails.name;
+					"WorkspaceId" = $workspaceSettingsDetails.properties.workspaceId;
+					"Scope" = $workspaceSettingsDetails.properties.scope;
+				}
+			}
+		}
+		else 
+		{
+			$this.WorkspaceSettings = $null;
+		}
 	}
 }

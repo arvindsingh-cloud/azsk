@@ -50,6 +50,7 @@ class SubscriptionCore: SVTBase
 		$subscriptionMetada.Add("HasGraphAccess",$this.HasGraphAPIAccess);
 		$subscriptionMetada.Add("ASCSecurityContactEmailIds", $this.SecurityCenterInstance.ContactEmail);
 		$subscriptionMetada.Add("ASCSecurityContactPhoneNumber", $this.SecurityCenterInstance.ContactPhoneNumber);
+		$subscriptionMetada.Add("ASCWorkspaceSettings", $this.SecurityCenterInstance.WorkspaceSettings);
 		$subscriptionMetada.Add("FeatureVersions", $azskRGTags);
 		$this.SubscriptionContext.SubscriptionMetadata = $subscriptionMetada;
 		$this.SubscriptionMandatoryTags += [ConfigurationManager]::GetAzSKConfigData().SubscriptionMandatoryTags;
